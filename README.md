@@ -1,6 +1,6 @@
 # jupyterlab-cell-enhancements
 
-Databricks-style enhancements for JupyterLab 4 notebook cells:
+Enhancements for JupyterLab 4 notebook cells:
 
 - **Cell titles** — give any cell an editable title shown above the input. Titles
   are stored in the cell's metadata (`cell_title`) so they travel with the
@@ -10,6 +10,19 @@ Databricks-style enhancements for JupyterLab 4 notebook cells:
   cell to fill the notebook, hiding everything else. Toggle the button again or
   press **Esc** to exit. Keyboard shortcut: **Ctrl/Cmd + Shift + Enter** while the
   notebook is focused.
+- **Floating notes** — attach a note to any cell. Click the marker in a cell's
+  top-right corner to open a floating card, anchored to the cell and connected by
+  a leader line. Notes:
+  - render **Markdown and LaTeX** (via JupyterLab's own renderer), so `**bold**`,
+    lists, code, links and `$x^2$` math all work;
+  - float above everything, including the sidebars, and follow their cell as you
+    scroll — hiding automatically once the cell scrolls out of view;
+  - are **draggable**; drag the header to reposition and the note stays glued to
+    its cell at the new offset;
+  - persist in cell metadata (`cell_comment`), including text, author, open/closed
+    state and position, and are saved automatically shortly after any change.
+
+  Set your display name under **Settings → Cell Enhancements → Comment author**.
 
 ## Requirements
 

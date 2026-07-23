@@ -1,7 +1,7 @@
 {
   "name": "jupyterlab-cell-enhancements",
-  "version": "0.2.0",
-  "description": "Databricks-style cell titles and a focus mode for JupyterLab notebooks.",
+  "version": "0.3.0",
+  "description": "Cell titles, focus mode, and floating markdown notes for JupyterLab notebooks.",
   "keywords": [
     "jupyter",
     "jupyterlab",
@@ -53,6 +53,7 @@
     "@jupyterlab/cells": "^4.0.0",
     "@jupyterlab/docregistry": "^4.0.0",
     "@jupyterlab/notebook": "^4.0.0",
+    "@jupyterlab/rendermime": "^4.0.0",
     "@jupyterlab/settingregistry": "^4.0.0",
     "@jupyterlab/ui-components": "^4.0.0",
     "@lumino/disposable": "^2.0.0",

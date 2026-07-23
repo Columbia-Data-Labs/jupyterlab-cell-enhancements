@@ -10,6 +10,7 @@ import {
   INotebookModel
 } from '@jupyterlab/notebook';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { IRenderMimeRegistry } from '@jupyterlab/rendermime';
 
 import { CellTitleManager } from './titles';
 import { CellCommentManager } from './comments';
@@ -35,28 +36,35 @@ class TitlesExtension
 class CommentsExtension
   implements DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel>
 {
-  constructor(getAuthor: () => string) {
+  constructor(getAuthor: () => string, rendermime: IRenderMimeRegistry) {
     this._getAuthor = getAuthor;
+    this._rendermime = rendermime;
   }
 
   createNew(panel: NotebookPanel): IDisposable {
-    const manager = new CellCommentManager(panel, this._getAuthor);
+    const manager = new CellCommentManager(
+      panel,
+      this._getAuthor,
+      this._rendermime
+    );
     return new DisposableDelegate(() => manager.dispose());
   }
 
   private _getAuthor: () => string;
+  private _rendermime: IRenderMimeRegistry;
 }
 
 const plugin: JupyterFrontEndPlugin<void> = {
   id: 'jupyterlab-cell-enhancements:plugin',
   description:
-    'Databricks-style cell titles and a focus mode for JupyterLab notebooks.',
+    'Cell titles, focus mode, and floating markdown notes for JupyterLab notebooks.',
   autoStart: true,
-  requires: [INotebookTracker],
+  requires: [INotebookTracker, IRenderMimeRegistry],
   optional: [ISettingRegistry],
   activate: (
     app: JupyterFrontEnd,
     tracker: INotebookTracker,
+    rendermime: IRenderMimeRegistry,
     settingRegistry: ISettingRegistry | null
   ) => {
     // Feature 1: editable, metadata-backed cell titles.
@@ -71,7 +79,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     let commentAuthor = '';
     app.docRegistry.addWidgetExtension(
       'Notebook',
-      new CommentsExtension(() => commentAuthor)
+      new CommentsExtension(() => commentAuthor, rendermime)
     );
 
     if (settingRegistry) {
