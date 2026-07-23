@@ -1,0 +1,22 @@
+node_modules/
+lib/
+tsconfig.tsbuildinfo
+.eslintcache
+.stylelintcache
+
+# Python / build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+dist/
+build/
+jupyterlab_cell_enhancements/labextension/
+jupyterlab_cell_enhancements/_version.py
+
+# Yarn (jlpm) — ignore the cache/state but keep the committed patch that the
+# prod build depends on (license-webpack-plugin fix).
+.yarn/*
+!.yarn/patches
+.pnp.*
+yarn-error.log

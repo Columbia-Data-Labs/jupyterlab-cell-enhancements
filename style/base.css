@@ -1,0 +1,243 @@
+/* ===== Cell titles ===================================================== */
+
+.cee-title-header {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 2px 0 4px 0;
+}
+
+.cee-title-display {
+  display: inline-block;
+  max-width: 100%;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: var(--jp-ui-font-size1);
+  color: var(--jp-ui-font-color1);
+  cursor: text;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cee-title-display:hover {
+  background: var(--jp-layout-color2);
+}
+
+.cee-title-display.cee-title-empty {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--jp-ui-font-color3);
+  opacity: 0;
+  transition: opacity 120ms ease-in-out;
+}
+
+/* Reveal the "Add a cell title" affordance only when hovering the cell. */
+.jp-Cell:hover .cee-title-display.cee-title-empty,
+.jp-mod-active .cee-title-display.cee-title-empty {
+  opacity: 1;
+}
+
+.cee-title-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1px 4px;
+  border: 1px solid var(--jp-brand-color1);
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: var(--jp-ui-font-size1);
+  color: var(--jp-ui-font-color0);
+  background: var(--jp-layout-color1);
+  outline: none;
+}
+
+/*
+ * Side-by-side output mode turns .jp-CodeCell into a named-area CSS grid
+ * (header / input+handle+output / footer). Our title header carries no
+ * grid-area, so it would auto-flow into an implicit row below the cell. Pin it
+ * to the top row spanning every column so it stays above the input, matching
+ * the built-in .jp-CellHeader area.
+ */
+.jp-mod-sideBySide.jp-Notebook .jp-CodeCell > .cee-title-header {
+  grid-row: 1;
+  grid-column: 1 / -1;
+}
+
+/* ===== Cell comments =================================================== */
+
+/* The cell hosts an absolutely-positioned marker, so it needs to be a
+ * positioning context. Added per-cell (not to .jp-Cell globally) by the manager. */
+.jp-Cell.cee-cell-commentable {
+  position: relative;
+}
+
+/* Zero-size anchor pinned to the cell's top-right corner. It carries no layout
+ * of its own; the marker and note position themselves against it. */
+.cee-comment-widget {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  z-index: 6;
+}
+
+/* A subtle rounded marker rather than Excel's hard red triangle. Faint until the
+ * cell is hovered when empty; solid and always visible once a comment exists. */
+.cee-comment-marker {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px 4px 4px 1px;
+  background: var(--jp-brand-color1);
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 120ms ease-in-out, transform 120ms ease-in-out;
+}
+
+.cee-comment-marker:hover {
+  transform: scale(1.15);
+}
+
+/* Empty-state affordance: reveal a faint marker only while hovering the cell,
+ * mirroring how the "Add a cell title" hint appears. */
+.jp-Cell:hover .cee-comment-widget:not(.cee-has-comment) .cee-comment-marker,
+.jp-mod-active .cee-comment-widget:not(.cee-has-comment) .cee-comment-marker {
+  opacity: 0.35;
+}
+
+/* A cell that actually has a comment always shows a solid marker. */
+.cee-comment-widget.cee-has-comment .cee-comment-marker {
+  opacity: 1;
+}
+
+/* The floating note. Hidden until the marker (or the note itself) is hovered. */
+.cee-comment-note {
+  position: absolute;
+  top: 18px;
+  right: 0;
+  min-width: 180px;
+  max-width: 320px;
+  padding: 8px 10px;
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 8px;
+  background: var(--jp-layout-color1);
+  color: var(--jp-ui-font-color1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  font-size: var(--jp-ui-font-size1);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 120ms ease-in-out, transform 120ms ease-in-out,
+    visibility 0s linear 120ms;
+  pointer-events: none;
+}
+
+.cee-comment-widget.cee-has-comment .cee-comment-marker:hover ~ .cee-comment-note,
+.cee-comment-note:hover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition-delay: 0s;
+  pointer-events: auto;
+}
+
+.cee-comment-author {
+  margin-bottom: 2px;
+  font-weight: 600;
+  color: var(--jp-ui-font-color0);
+}
+
+.cee-comment-text {
+  color: var(--jp-ui-font-color1);
+}
+
+/* The inline editor popover, positioned like the note. */
+.cee-comment-editor {
+  position: absolute;
+  top: 18px;
+  right: 0;
+  width: 260px;
+  padding: 8px;
+  border: 1px solid var(--jp-brand-color1);
+  border-radius: 8px;
+  background: var(--jp-layout-color1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+  z-index: 7;
+}
+
+.cee-comment-editor textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 5px;
+  font-family: var(--jp-ui-font-family);
+  font-size: var(--jp-ui-font-size1);
+  color: var(--jp-ui-font-color0);
+  background: var(--jp-layout-color0);
+  resize: vertical;
+  outline: none;
+}
+
+.cee-comment-editor textarea:focus {
+  border-color: var(--jp-brand-color1);
+}
+
+.cee-comment-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.cee-comment-hint {
+  font-size: var(--jp-ui-font-size0);
+  color: var(--jp-ui-font-color3);
+}
+
+.cee-comment-delete {
+  padding: 2px 8px;
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 4px;
+  font-size: var(--jp-ui-font-size0);
+  color: var(--jp-ui-font-color2);
+  background: var(--jp-layout-color2);
+  cursor: pointer;
+}
+
+.cee-comment-delete:hover {
+  color: var(--jp-error-color1);
+  border-color: var(--jp-error-color1);
+}
+
+/* ===== Focus mode ===================================================== */
+
+/*
+ * The focused cell is pinned as a fixed overlay (position/size set inline by
+ * focus.ts) so it sits above — and fully covers — the rest of the notebook,
+ * sidestepping the windowed renderer. Padding/sizing here must use border-box
+ * so it fits inside the inline width/height.
+ */
+.cee-focus-mode .jp-Cell.cee-focused-cell {
+  box-sizing: border-box;
+  padding: 16px 24px;
+  border: 1px solid var(--jp-border-color2);
+}
+
+/* A subtle banner so users know how to leave focus mode. */
+.cee-focus-mode .jp-Cell.cee-focused-cell::before {
+  content: 'Focus mode — press Esc or toggle the button to exit';
+  display: block;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: var(--jp-ui-font-size0);
+  color: var(--jp-ui-font-color2);
+  background: var(--jp-layout-color2);
+  text-align: center;
+}

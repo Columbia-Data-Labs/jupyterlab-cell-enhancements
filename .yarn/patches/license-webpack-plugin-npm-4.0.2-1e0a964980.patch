@@ -1,0 +1,17 @@
+diff --git a/dist/WebpackInnerModuleIterator.js b/dist/WebpackInnerModuleIterator.js
+index 282271e7411aa6221e408befb4ecfb259edc5896..748f181bdc95e983c6421be374e58ddcb697ce6e 100644
+--- a/dist/WebpackInnerModuleIterator.js
++++ b/dist/WebpackInnerModuleIterator.js
+@@ -58,7 +58,11 @@ var WebpackInnerModuleIterator = /** @class */ (function () {
+             return tokens[tokens.length - 1];
+         }
+         if (filename.indexOf('provide module') === 0) {
+-            return filename.split('=')[1].trim();
++            // webpack >=5.107 uses '|' as the request separator, older uses ' = '
++            var sep = filename.indexOf('|') > -1 ? '|' : '=';
++            var parts = filename.split(sep);
++            var actual = parts[parts.length - 1];
++            return actual ? actual.trim() : null;
+         }
+         if (filename.indexOf('consume-shared-module') === 0) {
+             var tokens = filename.split('|');

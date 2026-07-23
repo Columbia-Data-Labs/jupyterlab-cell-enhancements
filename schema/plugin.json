@@ -1,0 +1,36 @@
+{
+  "jupyter.lab.toolbars": {
+    "Cell": [
+      {
+        "name": "cell-enhancements-focus",
+        "command": "cell-enhancements:toggle-focus",
+        "rank": 50
+      }
+    ]
+  },
+  "jupyter.lab.shortcuts": [
+    {
+      "command": "cell-enhancements:toggle-focus",
+      "keys": ["Accel Shift Enter"],
+      "selector": ".jp-Notebook:focus"
+    }
+  ],
+  "title": "Cell Enhancements",
+  "description": "Settings for the cell titles and focus mode features.",
+  "type": "object",
+  "properties": {
+    "showTitles": {
+      "type": "boolean",
+      "title": "Show cell titles",
+      "description": "Display an editable title above each notebook cell.",
+      "default": true
+    },
+    "commentAuthor": {
+      "type": "string",
+      "title": "Comment author",
+      "description": "Name attributed to new cell comments you create.",
+      "default": ""
+    }
+  },
+  "additionalProperties": false
+}
