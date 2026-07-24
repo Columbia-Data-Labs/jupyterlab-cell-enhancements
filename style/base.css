@@ -152,6 +152,68 @@
   opacity: 0.8;
 }
 
+/* ---- Anchored text highlights -------------------------------------- */
+
+/* The commented span inside a cell's editor. Kept light so code stays legible. */
+.cee-anchor-highlight {
+  background: color-mix(in srgb, var(--jp-brand-color1) 20%, transparent);
+  border-bottom: 2px solid
+    color-mix(in srgb, var(--jp-brand-color1) 60%, transparent);
+  border-radius: 2px;
+}
+
+/* An anchor whose text no longer exists: shown muted rather than pointing at
+ * the wrong code. */
+.cee-anchor-outdated {
+  background: color-mix(in srgb, var(--jp-warn-color1) 18%, transparent);
+  border-bottom-style: dashed;
+  border-bottom-color: color-mix(
+    in srgb,
+    var(--jp-warn-color1) 60%,
+    transparent
+  );
+}
+
+/* The quoted source text shown at the top of an anchored note. */
+.cee-note-quote {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--jp-border-color2);
+  border-left: 3px solid var(--jp-brand-color1);
+  background: color-mix(in srgb, var(--jp-brand-color1) 5%, transparent);
+  color: var(--jp-ui-font-color2);
+  font-family: var(--jp-code-font-family);
+  font-size: 0.85em;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* Outdated notes carry the warning colour through to the card. */
+.cee-floating-note.cee-note-is-outdated .cee-note-quote {
+  border-left-color: var(--jp-warn-color1);
+  background: color-mix(in srgb, var(--jp-warn-color1) 8%, transparent);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--jp-warn-color1) 70%,
+    transparent
+  );
+}
+
+.cee-floating-note.cee-note-is-outdated::before {
+  background: var(--jp-warn-color1);
+}
+
+.cee-floating-note.cee-note-is-outdated .cee-note-quote::after {
+  content: ' (outdated)';
+  color: var(--jp-warn-color1);
+  font-style: italic;
+  text-decoration: none;
+}
+
 /* A clean, theme-integrated card with a frosted, lightly brand-tinted surface:
  * a dash of translucent colour that still keeps the markdown readable over the
  * code underneath. */
@@ -349,8 +411,85 @@
 }
 
 .cee-note-hint {
+  margin-top: 5px;
   font-size: var(--jp-ui-font-size0);
   color: var(--jp-ui-font-color3);
+}
+
+/* Explicit Save/Cancel, so committing an edit never depends on shortcuts. */
+.cee-note-save,
+.cee-note-cancel {
+  padding: 3px 12px;
+  border-radius: 6px;
+  font-size: var(--jp-ui-font-size0);
+  cursor: pointer;
+}
+
+.cee-note-cancel {
+  border: 1px solid var(--jp-border-color1);
+  background: transparent;
+  color: var(--jp-ui-font-color2);
+}
+
+.cee-note-cancel:hover {
+  color: var(--jp-ui-font-color0);
+  border-color: var(--jp-border-color0);
+}
+
+.cee-note-save {
+  border: 1px solid var(--jp-brand-color1);
+  background: var(--jp-brand-color1);
+  color: #fff;
+  font-weight: 600;
+}
+
+.cee-note-save:hover {
+  background: var(--jp-brand-color0, var(--jp-brand-color1));
+}
+
+/* The author name doubles as the "set your name" affordance. */
+.cee-note-author {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 1px 3px;
+}
+
+.cee-note-author:hover {
+  background: var(--jp-layout-color2);
+}
+
+.cee-note-author.cee-note-author-unset {
+  font-style: italic;
+  color: var(--jp-ui-font-color2);
+  text-decoration: underline dotted
+    color-mix(in srgb, var(--jp-brand-color1) 60%, transparent);
+  text-underline-offset: 3px;
+}
+
+.cee-note-author.cee-note-author-unset::after {
+  content: ' · double-click to set name';
+  font-style: normal;
+  font-size: var(--jp-ui-font-size0);
+  color: var(--jp-brand-color1);
+}
+
+/* Resolved notes read as archived: desaturated, with a badge. */
+.cee-floating-note.cee-note-is-resolved {
+  opacity: 0.72;
+}
+
+.cee-floating-note.cee-note-is-resolved::before {
+  background: var(--jp-success-color1, #4caf50);
+}
+
+.cee-floating-note.cee-note-is-resolved .cee-note-author::before {
+  content: '✓ ';
+  color: var(--jp-success-color1, #4caf50);
+  font-weight: 700;
+}
+
+.cee-floating-note.cee-note-is-resolved .cee-note-body {
+  color: var(--jp-ui-font-color2);
 }
 
 .cee-note-delete {
@@ -405,4 +544,104 @@ body[data-jp-theme-light='false'] .cee-floating-note {
   color: var(--jp-ui-font-color2);
   background: var(--jp-layout-color2);
   text-align: center;
+}
+
+/* DOM-anchored highlights (rendered markdown and outputs). Painted via the CSS
+ * Custom Highlight API so JupyterLab's own rendering is never mutated. */
+::highlight(cee-dom-anchor) {
+  background-color: color-mix(in srgb, var(--jp-brand-color1) 26%, transparent);
+  text-decoration: underline;
+  text-decoration-color: var(--jp-brand-color1);
+  text-underline-offset: 3px;
+}
+
+/* "Show cell titles" setting, applied as a body class by the plugin. */
+body.cee-hide-titles .cee-title-header {
+  display: none;
+}
+
+/* Colour picker dialog. */
+.cee-color-dialog .cee-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  cursor: pointer;
+}
+
+.cee-color-dialog input[type='color'] {
+  width: 44px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}
+
+.cee-color-dialog .cee-color-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--jp-border-color2);
+}
+
+/* ===== Cell appearance ================================================= */
+
+/* Each rule is gated on a data attribute set by AppearanceService, so an unset
+ * option leaves JupyterLab's own styling entirely alone. */
+
+body.cee-cell-rounded .jp-Cell .jp-InputArea-editor,
+body.cee-cell-rounded .jp-Cell .jp-Cell-inputWrapper .jp-InputArea-editor {
+  border-radius: 8px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.07),
+    0 2px 8px rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+}
+
+body.cee-cell-rounded .jp-Cell .jp-OutputArea-output {
+  border-radius: 8px;
+}
+
+body[data-cee-cell-bg] .jp-Cell .jp-InputArea-editor,
+body[data-cee-cell-bg] .jp-Cell .jp-InputArea-editor .cm-editor,
+body[data-cee-cell-bg] .jp-Cell .jp-InputArea-editor .cm-gutters {
+  background-color: var(--cee-cell-bg);
+}
+
+/* The vertical bar beside the input/output of the active cell. */
+body[data-cee-accent] .jp-Cell.jp-mod-selected .jp-Collapser,
+body[data-cee-accent] .jp-Cell.jp-mod-active .jp-Collapser,
+body[data-cee-accent] .jp-Cell .jp-Collapser:hover {
+  background-color: var(--cee-accent);
+}
+
+/* The [n]: execution counter beside inputs and outputs. */
+body[data-cee-prompt] .jp-Cell .jp-InputPrompt,
+body[data-cee-prompt] .jp-Cell .jp-OutputPrompt {
+  color: var(--cee-prompt);
+}
+
+.cee-color-dialog .cee-color-preview {
+  height: 34px;
+  margin: 8px 0;
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--jp-ui-font-size0);
+  color: var(--jp-ui-font-color2);
+}
+
+.cee-color-dialog .cee-alpha-value {
+  min-width: 40px;
+  text-align: right;
+  font-size: var(--jp-ui-font-size0);
+  color: var(--jp-ui-font-color2);
+}
+
+.cee-color-dialog input[type='range'] {
+  flex: 1 1 auto;
 }

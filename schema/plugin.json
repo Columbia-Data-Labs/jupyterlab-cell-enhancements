@@ -6,12 +6,21 @@
         "command": "cell-enhancements:toggle-focus",
         "rank": 50
       }
+    ],
+    "Notebook": [
+      {
+        "name": "cell-enhancements-author",
+        "command": "cell-enhancements:notes-menu",
+        "rank": 60
+      }
     ]
   },
   "jupyter.lab.shortcuts": [
     {
       "command": "cell-enhancements:toggle-focus",
-      "keys": ["Accel Shift Enter"],
+      "keys": [
+        "Accel Shift Enter"
+      ],
       "selector": ".jp-Notebook:focus"
     }
   ],
@@ -28,7 +37,43 @@
     "commentAuthor": {
       "type": "string",
       "title": "Comment author",
-      "description": "Name attributed to new cell comments you create.",
+      "description": "Overrides the name attributed to new comments. Leave blank to use your JupyterLab user identity.",
+      "default": ""
+    },
+    "showResolved": {
+      "type": "boolean",
+      "title": "Show resolved notes",
+      "description": "Keep resolved (archived) notes visible instead of hiding them.",
+      "default": false
+    },
+    "commentColor": {
+      "type": "string",
+      "title": "Comment colour",
+      "description": "Avatar colour for notes you write. Leave blank to derive a stable colour from your name.",
+      "default": ""
+    },
+    "cellRounded": {
+      "type": "boolean",
+      "title": "Rounded cell inputs",
+      "description": "Give cell input boxes rounded corners and a soft shadow.",
+      "default": true
+    },
+    "cellBackground": {
+      "type": "string",
+      "title": "Cell background colour",
+      "description": "CSS colour (rgba supported). Leave blank to use JupyterLab's default.",
+      "default": ""
+    },
+    "cellAccentColor": {
+      "type": "string",
+      "title": "Active cell bar colour",
+      "description": "CSS colour (rgba supported). Leave blank to use JupyterLab's default.",
+      "default": ""
+    },
+    "promptColor": {
+      "type": "string",
+      "title": "Execution prompt colour",
+      "description": "CSS colour (rgba supported). Leave blank to use JupyterLab's default.",
       "default": ""
     }
   },

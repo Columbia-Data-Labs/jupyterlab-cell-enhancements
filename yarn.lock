@@ -4478,6 +4478,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "jupyterlab-cell-enhancements@workspace:."
   dependencies:
+    "@codemirror/state": ^6.0.0
+    "@codemirror/view": ^6.0.0
     "@jupyterlab/application": ^4.0.0
     "@jupyterlab/apputils": ^4.0.0
     "@jupyterlab/builder": ^4.0.0

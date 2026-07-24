@@ -10,19 +10,59 @@ Enhancements for JupyterLab 4 notebook cells:
   cell to fill the notebook, hiding everything else. Toggle the button again or
   press **Esc** to exit. Keyboard shortcut: **Ctrl/Cmd + Shift + Enter** while the
   notebook is focused.
-- **Floating notes** — attach a note to any cell. Click the marker in a cell's
-  top-right corner to open a floating card, anchored to the cell and connected by
-  a leader line. Notes:
-  - render **Markdown and LaTeX** (via JupyterLab's own renderer), so `**bold**`,
-    lists, code, links and `$x^2$` math all work;
-  - float above everything, including the sidebars, and follow their cell as you
-    scroll — hiding automatically once the cell scrolls out of view;
-  - are **draggable**; drag the header to reposition and the note stays glued to
-    its cell at the new offset;
-  - persist in cell metadata (`cell_comment`), including text, author, open/closed
-    state and position, and are saved automatically shortly after any change.
+- **Floating notes** — attach a note to a whole cell, or to a specific span of
+  text. Notes float above everything (including the sidebars), follow their
+  anchor as you scroll, hide once it leaves the viewport, and are draggable —
+  dragging sets an offset that stays glued to the anchor.
 
-  Set your display name under **Settings → Cell Enhancements → Comment author**.
+  Notes render **Markdown and LaTeX** through JupyterLab's own renderer, so
+  `**bold**`, lists, code, links and `$x^2$` math all work.
+
+### Adding a note
+
+| Target | How |
+| --- | --- |
+| The whole cell | Click the marker in the cell's top-right corner |
+| A span of code | Select it, then right-click → *Add Comment to Selection* |
+| Rendered markdown | Select it, then right-click → *Add Comment to Selection* |
+| A cell output | Select it, then right-click → *Add Comment to Selection* |
+
+Anchored notes highlight their text and draw a leader line to the card.
+
+**Code anchors track your edits**: they're held in a CodeMirror `StateField` that
+maps every range through each document change, so a highlight stays on its text
+as you type around it. Across reloads, anchors are re-verified against the quoted
+text and re-found if they've moved.
+
+Markdown and output anchors are matched by quoted text instead, which is weaker —
+and note that **outputs are regenerated on every run**, so re-running a cell will
+usually orphan its output notes. Anything that can't be re-anchored is kept and
+flagged **outdated** (amber, with the original quote struck through) rather than
+silently pointing at the wrong place.
+
+### Resolving
+
+Click ✓ on a note to resolve (archive) it. Resolved notes are hidden; enable
+**Show resolved notes** to bring them back, each with a ↺ to reopen.
+
+### Identity and colour
+
+Notes are attributed using JupyterLab's own user identity, so they work without
+setup. Each author gets a **colour generated from their name** in OKLCH — any hue
+on the circle, with lightness and chroma constrained so the avatar text always
+keeps sufficient contrast. The same name yields the same colour for everyone
+opening the notebook.
+
+Double-click a note's name to change it (you'll be offered the chance to update
+existing notes), or its avatar to pick any colour. The **Notes** toolbar button
+and the command palette expose the same options.
+
+### Storage
+
+Everything lives in cell metadata under `cell_comments` — text, author, anchor,
+position, and resolved state — so notes travel with the notebook and are saved
+automatically shortly after any change. Notebooks written by earlier versions
+(`cell_comment`) are read transparently and migrated on first write.
 
 ## Requirements
 

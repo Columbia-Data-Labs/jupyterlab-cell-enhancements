@@ -1,7 +1,7 @@
 {
   "name": "jupyterlab-cell-enhancements",
-  "version": "0.3.0",
-  "description": "Cell titles, focus mode, and floating markdown notes for JupyterLab notebooks.",
+  "version": "0.4.0",
+  "description": "Cell titles, focus mode, and anchored floating notes for JupyterLab notebooks.",
   "keywords": [
     "jupyter",
     "jupyterlab",
@@ -48,6 +48,8 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
+    "@codemirror/state": "^6.0.0",
+    "@codemirror/view": "^6.0.0",
     "@jupyterlab/application": "^4.0.0",
     "@jupyterlab/apputils": "^4.0.0",
     "@jupyterlab/cells": "^4.0.0",
