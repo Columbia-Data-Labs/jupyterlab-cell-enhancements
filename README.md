@@ -59,12 +59,24 @@ Double-click a note's name to change it (you'll be offered the chance to update
 existing notes), or its avatar to pick any colour. The **Notes** toolbar button
 and the command palette expose the same options.
 
+### Resizing
+
+Notes carry a native resize grip at their bottom-right corner — drag it to size
+the card in both directions. Text wraps as you narrow it (the note reflows and
+scrolls rather than clipping), and the note stays pinned to its anchor as it
+grows. The size is saved per note, alongside its position.
+
 ### Storage
 
 Everything lives in cell metadata under `cell_comments` — text, author, anchor,
-position, and resolved state — so notes travel with the notebook and are saved
-automatically shortly after any change. Notebooks written by earlier versions
-(`cell_comment`) are read transparently and migrated on first write.
+position, size, and resolved state — so notes travel with the notebook and are
+saved automatically shortly after any change. Notebooks written by earlier
+versions (`cell_comment`) are read transparently and migrated on first write.
+
+Saving is routed through a single shared coordinator so that features writing
+the same notebook never issue overlapping saves — which, on a slow or
+network-backed filesystem, could otherwise race into a spurious "file changed on
+disk" conflict prompt.
 
 ## Side-by-side input and output
 

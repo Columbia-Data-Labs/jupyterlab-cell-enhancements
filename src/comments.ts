@@ -20,6 +20,7 @@ import {
   reanchor,
   readAnchors
 } from './anchors';
+import { requestContextSave } from './autosave';
 
 /**
  * Metadata key holding a cell's comments, as an array of {@link IComment}.
@@ -56,6 +57,9 @@ export interface IComment {
   open: boolean;
   dx: number;
   dy: number;
+  /** Explicit card size in px, set when the user drags the resize handle. */
+  w?: number;
+  h?: number;
   /**
    * Only set when the author deliberately picked a colour. Otherwise the colour
    * (and the initials) are derived from `author`, so they cannot go stale.
@@ -207,6 +211,11 @@ export function initialsFor(name: string): string {
 const SVGNS = 'http://www.w3.org/2000/svg';
 const ANCHOR_GAP = 20;
 const NOTE_WIDTH = 288;
+/** Minimum card size, mirroring the CSS min-width/min-height. */
+const MIN_NOTE_WIDTH = 200;
+const MIN_NOTE_HEIGHT = 90;
+/** How far in from the bottom-right corner counts as a resize-handle press. */
+const RESIZE_ZONE = 18;
 
 const MARKER_WIDGET_CLASS = 'cee-comment-widget';
 const MARKER_CLASS = 'cee-comment-marker';
@@ -271,6 +280,8 @@ function coerce(value: unknown, index: number): IComment | null {
     open: v.open === true,
     dx: typeof v.dx === 'number' ? v.dx : 0,
     dy: typeof v.dy === 'number' ? v.dy : 0,
+    w: typeof v.w === 'number' ? v.w : undefined,
+    h: typeof v.h === 'number' ? v.h : undefined,
     color: typeof v.color === 'string' ? v.color : undefined,
     colorExplicit: v.colorExplicit === true,
     anchor,
@@ -439,8 +450,13 @@ class FloatingNote {
     this.dot.setAttribute('r', '3.5');
 
     this._header.addEventListener('mousedown', this._onDragStart);
+    // Native CSS `resize: both` draws the corner grip and does the actual
+    // resizing; this listener only watches so we can keep the note anchored and
+    // persist the final size.
+    this.node.addEventListener('mousedown', this._onResizeStart);
     this._model.metadataChanged.connect(this._onMetadataChanged, this);
 
+    this._applyStoredSize();
     this._setAuthor(this._comment());
     if (!hasText(this._comment())) {
       this._beginEdit();
@@ -484,10 +500,13 @@ class FloatingNote {
     this._disposed = true;
     this._model.metadataChanged.disconnect(this._onMetadataChanged, this);
     this._header.removeEventListener('mousedown', this._onDragStart);
+    this.node.removeEventListener('mousedown', this._onResizeStart);
     this._authorEl.removeEventListener('dblclick', this._onAuthorClick);
     this._avatar.removeEventListener('dblclick', this._onAvatarClick);
     document.removeEventListener('mousemove', this._onDragMove);
     document.removeEventListener('mouseup', this._onDragEnd);
+    document.removeEventListener('mousemove', this._onResizeMove);
+    document.removeEventListener('mouseup', this._onResizeEnd);
     this._renderer?.dispose();
   }
 
@@ -554,8 +573,9 @@ class FloatingNote {
     this.line.style.display = '';
     this.dot.style.display = '';
 
-    const dx = this._dragging ? this._dx : comment?.dx ?? 0;
-    const dy = this._dragging ? this._dy : comment?.dy ?? 0;
+    const live = this._dragging || this._resizing;
+    const dx = live ? this._dx : comment?.dx ?? 0;
+    const dy = live ? this._dy : comment?.dy ?? 0;
 
     const width = this.node.offsetWidth || NOTE_WIDTH;
     const height = this.node.offsetHeight || 140;
@@ -823,13 +843,76 @@ class FloatingNote {
     this._write({ dx: this._dx, dy: this._dy });
   };
 
+  /** Set the card to its stored size, if any, on construction or reload. */
+  private _applyStoredSize(): void {
+    const c = this._comment();
+    if (c?.w && c.w >= MIN_NOTE_WIDTH) {
+      this.node.style.width = `${c.w}px`;
+    }
+    if (c?.h && c.h >= MIN_NOTE_HEIGHT) {
+      this.node.style.height = `${c.h}px`;
+    }
+  }
+
+  // The browser resizes the card natively; we watch only so the note stays
+  // pinned to its anchor while it grows, and so the final size is saved.
+  private _onResizeStart = (event: MouseEvent): void => {
+    if (this._dragging || (event.target as HTMLElement).closest('button')) {
+      return;
+    }
+    const rect = this.node.getBoundingClientRect();
+    const inCorner =
+      event.clientX >= rect.right - RESIZE_ZONE &&
+      event.clientY >= rect.bottom - RESIZE_ZONE;
+    if (!inCorner) {
+      return;
+    }
+    // Deliberately no preventDefault: that would cancel the native resize.
+    const c = this._comment();
+    this._resizing = true;
+    this._dx = c?.dx ?? 0;
+    this._dy = c?.dy ?? 0;
+    this._lastH = this.node.offsetHeight;
+    document.addEventListener('mousemove', this._onResizeMove);
+    document.addEventListener('mouseup', this._onResizeEnd);
+  };
+
+  private _onResizeMove = (): void => {
+    if (!this._resizing) {
+      return;
+    }
+    // The card grows down and right from its top-left; reposition() otherwise
+    // recentres vertically on the anchor, which would make the note creep up as
+    // it gets taller. Feed half the height gain back into dy to hold the top
+    // edge steady. (Width doesn't enter the vertical placement, so no x fixup.)
+    const h = this.node.offsetHeight;
+    this._dy += (h - this._lastH) / 2;
+    this._lastH = h;
+  };
+
+  private _onResizeEnd = (): void => {
+    if (!this._resizing) {
+      return;
+    }
+    this._resizing = false;
+    document.removeEventListener('mousemove', this._onResizeMove);
+    document.removeEventListener('mouseup', this._onResizeEnd);
+    this._write({
+      w: Math.round(this.node.offsetWidth),
+      h: Math.round(this.node.offsetHeight),
+      dx: this._dx,
+      dy: this._dy
+    });
+  };
+
   private _onMetadataChanged(_: ICellModel, change: { key: string }): void {
     if (change.key !== COMMENTS_METADATA_KEY) {
       return;
     }
-    if (this._editing || this._dragging) {
-      // A full re-render would discard unsaved text or fight the drag, but the
-      // header is independent of both — so an author rename still lands here.
+    if (this._editing || this._dragging || this._resizing) {
+      // A full re-render would discard unsaved text or fight the drag/resize,
+      // but the header is independent of all three — so an author rename still
+      // lands here.
       this._setAuthor(this._comment());
       return;
     }
@@ -871,6 +954,8 @@ class FloatingNote {
   private _renderer: IRenderedWidget | null = null;
   private _editing = false;
   private _dragging = false;
+  private _resizing = false;
+  private _lastH = 0;
   private _startX = 0;
   private _startY = 0;
   private _dx = 0;
@@ -1007,10 +1092,6 @@ export class CellCommentManager implements IDisposable {
       return;
     }
     this._isDisposed = true;
-    if (this._saveTimer) {
-      window.clearTimeout(this._saveTimer);
-      this._saveTimer = 0;
-    }
     if (this._syncTimer) {
       window.clearTimeout(this._syncTimer);
       this._syncTimer = 0;
@@ -1290,19 +1371,9 @@ export class CellCommentManager implements IDisposable {
     if (this._isDisposed) {
       return;
     }
-    if (this._saveTimer) {
-      window.clearTimeout(this._saveTimer);
-    }
-    this._saveTimer = window.setTimeout(() => {
-      this._saveTimer = 0;
-      const context = this._panel.context;
-      if (this._isDisposed || !context || context.isDisposed) {
-        return;
-      }
-      void context.save().catch(() => {
-        /* a failed autosave shouldn't disrupt editing */
-      });
-    }, 700);
+    // Shared coordinator: serialized with every other feature saving this same
+    // notebook, so two saves never overlap and race into a phantom conflict.
+    requestContextSave(this._panel.context);
   }
 
   private _cellFor(model: ICellModel): Cell | null {
@@ -1319,7 +1390,6 @@ export class CellCommentManager implements IDisposable {
   private _rendermime: IRenderMimeRegistry;
   private _options: INoteOptions;
   private _isDisposed = false;
-  private _saveTimer = 0;
   private _syncTimer = 0;
   private _notes = new Map<string, FloatingNote>();
   private _tracked = new Set<ICellModel>();

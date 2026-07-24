@@ -176,6 +176,7 @@
 
 /* The quoted source text shown at the top of an anchored note. */
 .cee-note-quote {
+  flex: 0 0 auto;
   padding: 6px 12px;
   border-bottom: 1px solid var(--jp-border-color2);
   border-left: 3px solid var(--jp-brand-color1);
@@ -223,6 +224,15 @@
   left: 0;
   width: 288px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  /* Native resize grip (the diagonal lines) at the bottom-right corner.
+   * `overflow: hidden` keeps it enabled while clipping to the rounded card. */
+  resize: both;
+  min-width: 200px;
+  min-height: 90px;
+  max-width: min(560px, 92vw);
+  max-height: 70vh;
   border: 1px solid var(--jp-border-color1);
   border-radius: 12px;
   background:
@@ -264,6 +274,7 @@
 }
 
 .cee-note-header {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -336,7 +347,11 @@
 
 .cee-note-body {
   padding: 10px 12px;
-  max-height: 50vh;
+  /* Fill whatever height the (resizable) card has left after the header/quote,
+   * and scroll within that. Text wraps by default, so shrinking the card
+   * reflows the note rather than clipping it. */
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   line-height: 1.5;
   color: var(--jp-ui-font-color1);

@@ -4,6 +4,8 @@ import { Dialog, showDialog } from '@jupyterlab/apputils';
 import { NotebookPanel } from '@jupyterlab/notebook';
 import { Cell, ICellModel } from '@jupyterlab/cells';
 
+import { requestContextSave } from './autosave';
+
 /**
  * Side-by-side input/output for a single cell.
  *
@@ -354,10 +356,6 @@ export class CellSplitManager implements IDisposable {
       return;
     }
     this._isDisposed = true;
-    if (this._saveTimer) {
-      window.clearTimeout(this._saveTimer);
-      this._saveTimer = 0;
-    }
     for (const model of this._tracked) {
       model.metadataChanged.disconnect(this._onCellMetadata, this);
     }
@@ -479,19 +477,8 @@ export class CellSplitManager implements IDisposable {
     if (this._isDisposed) {
       return;
     }
-    if (this._saveTimer) {
-      window.clearTimeout(this._saveTimer);
-    }
-    this._saveTimer = window.setTimeout(() => {
-      this._saveTimer = 0;
-      const context = this._panel.context;
-      if (this._isDisposed || !context || context.isDisposed) {
-        return;
-      }
-      void context.save().catch(() => {
-        /* a failed autosave shouldn't disrupt editing */
-      });
-    }, 700);
+    // Shared with the notes layer so the two never issue overlapping saves.
+    requestContextSave(this._panel.context);
   }
 
   private _cellFor(model: ICellModel): Cell | null {
@@ -506,6 +493,5 @@ export class CellSplitManager implements IDisposable {
   private _panel: NotebookPanel;
   private _options: ISplitOptions;
   private _isDisposed = false;
-  private _saveTimer = 0;
   private _tracked = new Set<ICellModel>();
 }
