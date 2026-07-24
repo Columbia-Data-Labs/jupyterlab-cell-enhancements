@@ -5,6 +5,11 @@
         "name": "cell-enhancements-focus",
         "command": "cell-enhancements:toggle-focus",
         "rank": 50
+      },
+      {
+        "name": "cell-enhancements-split",
+        "command": "cell-enhancements:toggle-cell-split",
+        "rank": 51
       }
     ],
     "Notebook": [
@@ -57,6 +62,20 @@
       "title": "Rounded cell inputs",
       "description": "Give cell input boxes rounded corners and a soft shadow.",
       "default": true
+    },
+    "cellSplitDefault": {
+      "type": "boolean",
+      "title": "Side-by-side input/output",
+      "description": "Show output beside input for every code cell that has no side-by-side setting of its own. Individual cells can always be toggled from the cell toolbar, and that choice is saved in the notebook.",
+      "default": false
+    },
+    "cellSplitRatio": {
+      "type": "number",
+      "title": "Default input pane width",
+      "description": "Fraction of the cell width given to the input when a cell is side-by-side. Dragging a cell's divider overrides this for that cell.",
+      "minimum": 0.2,
+      "maximum": 0.8,
+      "default": 0.5
     },
     "cellBackground": {
       "type": "string",

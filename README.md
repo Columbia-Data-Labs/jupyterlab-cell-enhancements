@@ -17,6 +17,8 @@ Enhancements for JupyterLab 4 notebook cells:
 
   Notes render **Markdown and LaTeX** through JupyterLab's own renderer, so
   `**bold**`, lists, code, links and `$x^2$` math all work.
+- **Side-by-side input/output** — put a code cell's output beside its input
+  instead of below it, per cell, saved in the notebook.
 
 ### Adding a note
 
@@ -63,6 +65,49 @@ Everything lives in cell metadata under `cell_comments` — text, author, anchor
 position, and resolved state — so notes travel with the notebook and are saved
 automatically shortly after any change. Notebooks written by earlier versions
 (`cell_comment`) are read transparently and migrated on first write.
+
+## Side-by-side input and output
+
+Split a code cell so its output sits beside its input. Use the split button in
+the cell toolbar, right-click the cell, or the command palette.
+
+Drag the divider between the panes to resize them; double-click it to go back to
+the default, and it's focusable with **←/→** (hold **Shift** for larger steps).
+
+A few deliberate behaviours:
+
+- The split only engages once the cell **has output**, so an un-run cell keeps
+  the full width and then splits by itself when it executes.
+- When the notebook gets too narrow for two useful panes, they **wrap back to
+  stacked** rather than overflowing.
+- Wide output (data frames, long lines) scrolls inside its own pane instead of
+  forcing the pane past its share of the width.
+
+State is stored per cell in metadata, so it travels with the notebook:
+
+```json
+"metadata": { "cell_split": true, "cell_split_ratio": 0.45 }
+```
+
+Cells with no `cell_split` of their own follow the **Side-by-side input/output**
+setting, and metadata is written only when a cell differs from that default — so
+toggling cells doesn't sprinkle a redundant key across the notebook.
+
+## Cell appearance
+
+Under the **Notes** toolbar button → *Cell Appearance*:
+
+| Option | Effect |
+| --- | --- |
+| Rounded cell inputs | Rounded corners and a soft shadow on input boxes (on by default) |
+| Side-by-side input/output | Split every code cell that has no setting of its own |
+| Default input pane width | How much width the input gets in a split cell |
+| Cell background colour | Any CSS colour, with an opacity slider |
+| Active cell bar colour | The vertical bar beside the selected cell |
+| Execution prompt colour | The `[n]:` counters |
+
+Colour options left blank fall through to JupyterLab's own styling rather than
+overriding it with a default, so a fresh install looks untouched.
 
 ## Requirements
 

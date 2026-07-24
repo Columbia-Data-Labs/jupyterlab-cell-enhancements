@@ -645,3 +645,143 @@ body[data-cee-prompt] .jp-Cell .jp-OutputPrompt {
 .cee-color-dialog input[type='range'] {
   flex: 1 1 auto;
 }
+
+/* ===== Side-by-side input / output ===================================== */
+
+/* Driven by cell metadata: CellSplitManager puts .cee-cell-split and a
+ * --cee-split-ratio on the cell node. The row layout only engages once the
+ * cell actually has output — JupyterLab drops .jp-mod-noOutputs on execution,
+ * so an un-run cell keeps its full width and then splits by itself. */
+.jp-Cell.cee-cell-split {
+  container-type: inline-size;
+}
+
+.jp-Cell.cee-cell-split:not(.jp-mod-noOutputs) {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+/* Titles, headers and footers keep the full width and wrap onto their own
+ * line; only the input and output wrappers share a row. */
+.jp-Cell.cee-cell-split:not(.jp-mod-noOutputs) > * {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+
+/* The panes are sized with flex-grow rather than flex-basis, so that when the
+ * cell is too narrow for both minimums they wrap and each fills its own line
+ * instead of overflowing. */
+.jp-Cell.cee-cell-split:not(.jp-mod-noOutputs) > .jp-Cell-inputWrapper {
+  /* Longhand deliberately: a calc() inside the `flex` shorthand is not
+   * reliably parsed. */
+  flex-grow: var(--cee-split-ratio, 0.5);
+  flex-shrink: 1;
+  flex-basis: 0;
+  min-width: var(--cee-split-min-pane, 190px);
+}
+
+.jp-Cell.cee-cell-split:not(.jp-mod-noOutputs) > .jp-Cell-outputWrapper {
+  flex-grow: calc(1 - var(--cee-split-ratio, 0.5));
+  flex-shrink: 1;
+  flex-basis: 0;
+  min-width: var(--cee-split-min-pane, 190px);
+
+  /* JupyterLab's gap between a stacked input and output. */
+  margin-top: 0;
+}
+
+/* Let wide content (data frames, long lines) shrink with its pane and scroll
+ * inside it, rather than forcing the pane past its share of the width. */
+.jp-Cell.cee-cell-split:not(.jp-mod-noOutputs)
+  > .jp-Cell-inputWrapper
+  > .jp-Cell-inputArea,
+.jp-Cell.cee-cell-split:not(.jp-mod-noOutputs)
+  > .jp-Cell-outputWrapper
+  > .jp-Cell-outputArea {
+  min-width: 0;
+}
+
+.jp-Cell.cee-cell-split:not(.jp-mod-noOutputs)
+  > .jp-Cell-outputWrapper
+  .jp-OutputArea-output {
+  overflow-x: auto;
+}
+
+/* The draggable divider. */
+.jp-Cell.cee-cell-split:not(.jp-mod-noOutputs) > .cee-split-gutter {
+  flex: 0 0 var(--cee-split-gutter-width, 12px);
+  align-self: stretch;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: 2px 0;
+  overflow: visible;
+  cursor: col-resize;
+  outline: none;
+}
+
+.cee-split-gutter .cee-split-grip {
+  width: 2px;
+  border-radius: 2px;
+  background: var(--jp-border-color2);
+  opacity: 0.7;
+  transition:
+    background-color 120ms ease,
+    opacity 120ms ease,
+    width 120ms ease;
+}
+
+.cee-split-gutter:hover .cee-split-grip,
+.cee-split-gutter:focus-visible .cee-split-grip,
+body.cee-split-dragging .cee-split-gutter .cee-split-grip {
+  width: 3px;
+  opacity: 1;
+  background: var(--jp-brand-color1);
+}
+
+/* Nothing to sit beside until the cell has run. */
+.jp-Cell.cee-cell-split.jp-mod-noOutputs > .cee-split-gutter {
+  display: none;
+}
+
+/* Too narrow for two panes: they wrap on their own, so drop the divider. */
+@container (max-width: 392px) {
+  .cee-split-gutter {
+    display: none;
+  }
+}
+
+/* Keep the cursor steady and stop the drag from selecting page text. */
+body.cee-split-dragging {
+  cursor: col-resize;
+  user-select: none;
+}
+
+/* Split-ratio dialog. */
+.cee-ratio-dialog .cee-ratio-preview {
+  display: flex;
+  gap: 4px;
+  height: 46px;
+  margin: 10px 0 2px;
+}
+
+.cee-ratio-dialog .cee-ratio-pane {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--jp-border-color1);
+  border-radius: 6px;
+  background: var(--jp-layout-color2);
+  font-size: var(--jp-ui-font-size0);
+  color: var(--jp-ui-font-color2);
+}
+
+.cee-ratio-dialog input[type='range'] {
+  flex: 1 1 auto;
+}

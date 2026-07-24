@@ -2,9 +2,12 @@ import { Widget } from '@lumino/widgets';
 import { Dialog, showDialog } from '@jupyterlab/apputils';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 
+import { clampRatio, promptForRatio } from './split';
+
 /**
- * Cell chrome customisation: rounded/shadowed input boxes, and colours for the
- * cell background, the active-cell bar and the execution prompt.
+ * Cell chrome customisation: rounded/shadowed input boxes, colours for the
+ * cell background, the active-cell bar and the execution prompt, and the
+ * notebook-wide defaults for side-by-side input/output.
  *
  * Everything is applied as CSS custom properties on <body>, guarded by a data
  * attribute per property, so an unset option leaves JupyterLab's own styling
@@ -197,6 +200,17 @@ export class AppearanceService {
     return this._settings?.get('cellRounded').composite === true;
   }
 
+  /** Whether cells with no `cell_split` metadata show input beside output. */
+  get splitDefault(): boolean {
+    return this._settings?.get('cellSplitDefault').composite === true;
+  }
+
+  /** Input-pane width for cells with no `cell_split_ratio` of their own. */
+  get splitRatio(): number {
+    const value = this._settings?.get('cellSplitRatio').composite;
+    return clampRatio(typeof value === 'number' ? value : 0.5);
+  }
+
   valueOf(option: IAppearanceOption): string {
     const value = this._settings?.get(option.key).composite;
     return typeof value === 'string' ? value : '';
@@ -222,6 +236,26 @@ export class AppearanceService {
     void this._settings
       ?.set('cellRounded', !this.rounded)
       .catch(reason => console.warn('Could not update cellRounded.', reason));
+  }
+
+  toggleSplitDefault(): void {
+    void this._settings
+      ?.set('cellSplitDefault', !this.splitDefault)
+      .catch(reason =>
+        console.warn('Could not update cellSplitDefault.', reason)
+      );
+  }
+
+  async promptForSplitRatio(): Promise<void> {
+    const ratio = await promptForRatio(this.splitRatio);
+    if (ratio === null) {
+      return;
+    }
+    await this._settings
+      ?.set('cellSplitRatio', ratio)
+      .catch(reason =>
+        console.warn('Could not update cellSplitRatio.', reason)
+      );
   }
 
   async promptFor(option: IAppearanceOption): Promise<void> {

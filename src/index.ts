@@ -17,7 +17,15 @@ import { Menu } from '@lumino/widgets';
 
 import { Cell } from '@jupyterlab/cells';
 
+import { splitIcon } from './icons';
 import { CellTitleManager } from './titles';
+import {
+  CellSplitManager,
+  ISplitOptions,
+  canSplit,
+  isSplitOn,
+  setSplitOn
+} from './split';
 import {
   CellCommentManager,
   IAuthorApi,
@@ -141,6 +149,37 @@ class CommentsExtension
   private _managers = new Set<CellCommentManager>();
 }
 
+/**
+ * A notebook widget extension that gives each notebook a CellSplitManager, so
+ * cells can show their input beside their output.
+ */
+class SplitExtension
+  implements DocumentRegistry.IWidgetExtension<NotebookPanel, INotebookModel>
+{
+  constructor(options: ISplitOptions) {
+    this._options = options;
+  }
+
+  createNew(panel: NotebookPanel): IDisposable {
+    const manager = new CellSplitManager(panel, this._options);
+    this._managers.add(manager);
+    return new DisposableDelegate(() => {
+      this._managers.delete(manager);
+      manager.dispose();
+    });
+  }
+
+  /** Re-evaluate every open notebook, e.g. when the global default changes. */
+  refreshAll(): void {
+    for (const manager of this._managers) {
+      manager.refresh();
+    }
+  }
+
+  private _options: ISplitOptions;
+  private _managers = new Set<CellSplitManager>();
+}
+
 const plugin: JupyterFrontEndPlugin<void> = {
   id: 'jupyterlab-cell-enhancements:plugin',
   description:
@@ -216,6 +255,45 @@ const plugin: JupyterFrontEndPlugin<void> = {
     });
     // Cell chrome customisation, grouped into its own submenu.
     const appearance = new AppearanceService();
+
+    // Feature 4: side-by-side input/output, per cell and backed by metadata.
+    const splitOptions: ISplitOptions = {
+      defaultOn: () => appearance.splitDefault,
+      defaultRatio: () => appearance.splitRatio
+    };
+    const splits = new SplitExtension(splitOptions);
+    app.docRegistry.addWidgetExtension('Notebook', splits);
+
+    const toggleSplitCommand = 'cell-enhancements:toggle-cell-split';
+    const splittableCell = (): Cell | null => {
+      const cell = tracker.activeCell;
+      return cell && canSplit(cell.model) ? cell : null;
+    };
+    app.commands.addCommand(toggleSplitCommand, {
+      label: 'Side-by-Side Input/Output',
+      caption: 'Show this cell’s output beside its input instead of below',
+      icon: splitIcon,
+      isEnabled: () => !!splittableCell(),
+      isToggleable: true,
+      isToggled: () => {
+        const cell = splittableCell();
+        return !!cell && isSplitOn(cell.model, splitOptions);
+      },
+      execute: () => {
+        const cell = splittableCell();
+        if (!cell) {
+          return;
+        }
+        const next = !isSplitOn(cell.model, splitOptions);
+        setSplitOn(cell.model, next, splitOptions);
+      }
+    });
+    app.contextMenu.addItem({
+      command: toggleSplitCommand,
+      selector: '.jp-Notebook .jp-CodeCell',
+      rank: 13
+    });
+
     const roundedCommand = 'cell-enhancements:toggle-rounded-cells';
     app.commands.addCommand(roundedCommand, {
       label: () => `${checkbox(appearance.rounded)}  Rounded Cell Inputs`,
@@ -223,7 +301,28 @@ const plugin: JupyterFrontEndPlugin<void> = {
       isToggled: () => appearance.rounded,
       execute: () => appearance.toggleRounded()
     });
-    const appearanceCommands = [roundedCommand];
+    const splitDefaultCommand = 'cell-enhancements:toggle-split-default';
+    app.commands.addCommand(splitDefaultCommand, {
+      label: () =>
+        `${checkbox(appearance.splitDefault)}  Side-by-Side Input/Output (All Cells)`,
+      caption:
+        'Split every code cell that has no side-by-side setting of its own',
+      isToggleable: true,
+      isToggled: () => appearance.splitDefault,
+      execute: () => appearance.toggleSplitDefault()
+    });
+    const splitRatioCommand = 'cell-enhancements:set-split-ratio';
+    app.commands.addCommand(splitRatioCommand, {
+      label: 'Default Input Pane Width…',
+      caption: 'How much width the input gets in a side-by-side cell',
+      execute: () => appearance.promptForSplitRatio()
+    });
+
+    const appearanceCommands = [
+      roundedCommand,
+      splitDefaultCommand,
+      splitRatioCommand
+    ];
     for (const option of APPEARANCE_OPTIONS) {
       const command = `cell-enhancements:set-${option.key}`;
       app.commands.addCommand(command, {
@@ -272,6 +371,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
         setColorCommand,
         toggleResolvedCommand,
         toggleTitlesCommand,
+        toggleSplitCommand,
         ...appearanceCommands
       ]) {
         palette.addItem({ command, category: 'Notebook Cell Enhancements' });
@@ -330,6 +430,10 @@ const plugin: JupyterFrontEndPlugin<void> = {
             }
             showTitles = settings.get('showTitles').composite !== false;
             document.body.classList.toggle('cee-hide-titles', !showTitles);
+            // Cells carrying no split metadata of their own inherit the global
+            // default, so re-evaluate every open notebook. Cheap: it walks the
+            // cell widgets and toggles a class.
+            splits.refreshAll();
           };
           readDisplay();
           settings.changed.connect(readDisplay);
